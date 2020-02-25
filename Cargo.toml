@@ -1,9 +1,20 @@
 [package]
-name = "steam_price_tracker"
-version = "0.1.0"
-authors = ["Mdrokz <mohammadmunshi@gmail.com>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+name = 'steam_price_tracker'
+version = '0.1.0'
+authors = ['Mdrokz <mohammadmunshi@gmail.com>']
+edition = '2018'
 
 [dependencies]
+select = '0.4.3'
+scraper = '0.11.0'
+serde = '1.0.104'
+serde_derive = '1.0.104'
+serde_json = '1.0.48'
+
+[dependencies.reqwest]
+version = '0.10.2'
+features = ['json']
+
+[dependencies.tokio]
+version = '0.2.11'
+features = ['full']
