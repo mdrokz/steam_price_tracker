@@ -10,7 +10,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/target/debug/steam_price_tracker.exe",
-            "args": ["39D47EE115789F398D75614DBCCAFB3A","76561198358405782"],
+            "args": ["no_steam","39D47EE115789F398D75614DBCCAFB3A","76561198358405782"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
