@@ -9,7 +9,14 @@ select = '0.4.3'
 scraper = '0.11.0'
 serde = '1.0.104'
 serde_derive = '1.0.104'
+chrono = '0.4.10'
+postgres = '0.17.1'
+tokio-postgres = '0.5.2'
+postgres-types = '0.1.0'
 serde_json = '1.0.48'
+
+[dependencies.web_api_derive]
+path = 'web_api_derive'
 
 [dependencies.reqwest]
 version = '0.10.2'

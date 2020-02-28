@@ -1,3 +1,17 @@
+use postgres_types::ToSql;
+use postgres::Row;
+use chrono::NaiveDateTime;
+
+pub trait ExtractStructs {
+    fn extract(_data:&Self) -> Vec<&(dyn ToSql + Sync)>  {
+        vec![&20,&20]
+    }
+
+    fn map_pg_values(&mut self,_pg_row:&Vec<Row>) {
+        
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GamesData {
     #[serde(rename = "response")]
@@ -13,7 +27,7 @@ pub struct Response {
     pub games: Vec<Game>,
 }
 
-#[derive(Serialize, Deserialize, Debug,Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Game {
     #[serde(rename = "appid")]
     pub appid: i64,
@@ -32,4 +46,19 @@ pub struct Game {
 
     #[serde(rename = "playtime_2weeks")]
     pub playtime_2_weeks: Option<i64>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GameJsonData {
+    #[serde(rename = "appid")]
+    pub appid: i64,
+    #[serde(rename = "range")]
+    pub range: i64,
+}
+
+#[derive(ExtractStructs,Default,Debug)]
+pub struct PriceData {
+    pub appid: i32,
+    pub price: i32,
+    pub date: NaiveDateTime
 }
