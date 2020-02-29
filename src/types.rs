@@ -1,27 +1,25 @@
 extern crate chrono;
 
-use postgres_types::{ToSql};
-use tokio_postgres::Row;
 use chrono::naive::NaiveDateTime;
+use postgres_types::ToSql;
 use std::default::Default;
+use tokio_postgres::Row;
 
 pub trait ExtractStructs {
-    fn extract(_data:&Self) -> Vec<&(dyn ToSql + Sync)>  {
-        vec![&20,&20]
+    fn extract(_data: &Self) -> Vec<&(dyn ToSql + Sync)> {
+        vec![&20, &20]
     }
 
-    fn map_pg_values(&mut self,_pg_row:&Vec<Row>) {
-        
-    }
+    fn map_pg_values(&mut self, _pg_row: &Vec<Row>) {}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct GamesData {
     #[serde(rename = "response")]
     pub response: Response,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct Response {
     #[serde(rename = "game_count")]
     pub game_count: i64,
@@ -30,7 +28,7 @@ pub struct Response {
     pub games: Vec<Game>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default,Clone)]
 pub struct Game {
     #[serde(rename = "appid")]
     pub appid: i64,
@@ -59,9 +57,9 @@ pub struct GameJsonData {
     pub range: i32,
 }
 
-#[derive(ExtractStructs,Debug)]
+#[derive(ExtractStructs, Debug)]
 pub struct PriceData {
     pub appid: i32,
     pub price: i32,
-    pub date: NaiveDateTime
+    pub date: NaiveDateTime,
 }

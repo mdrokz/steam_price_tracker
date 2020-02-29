@@ -7,8 +7,12 @@ extern crate web_api_derive;
 use std::cmp::Ordering;
 use std::env;
 use std::fs;
+use std::sync::mpsc::channel;
+use std::thread;
+use std::time::Duration;
 
 use chrono::{DateTime, Local, NaiveDateTime};
+use futures::executor;
 use lettre::smtp::authentication::IntoCredentials;
 use lettre::{SmtpClient, Transport};
 use lettre_email::EmailBuilder;
@@ -29,9 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let no_steam = env::args().nth(1).filter(|y| y.contains("no_steam"));
     let env_pairs = (env_iter.next(), env_iter.next());
     println!("{:?}", no_steam);
-    // send_mail();
     if no_steam != None {
-        scrape_steam_store(None).await;
+        set_interval(Duration::from_millis(1000 * 5), None);
     } else {
         match env_pairs {
             (Some(steam_key), Some(user_id)) => {
@@ -48,9 +51,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ),
         }
         let data = get_games_data(&steam_api_url).await;
-        scrape_steam_store(Some(data)).await;
+        set_interval(Duration::from_millis(1000 * 5), Some(data));
     }
     Ok(())
+}
+
+fn set_interval(duration: Duration, game: Option<GamesData>) {
+    let (tick_tx, tick_rx) = channel::<i32>();
+
+    thread::spawn(move || loop {
+        thread::sleep(duration);
+        tick_tx.send(1).unwrap();
+    });
+
+    loop {
+        thread::sleep(Duration::from_millis(50));
+        if let Ok(_) = tick_rx.try_recv() {
+            if let Some(x) = &game {
+                executor::block_on(scrape_steam_store(Some(x.clone())));
+            } else {
+                executor::block_on(scrape_steam_store(None));
+            }
+        }
+    }
 }
 
 async fn connect(username: &str, password: &str, database: &str) -> Client {
