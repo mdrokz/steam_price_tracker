@@ -1,12 +1,10 @@
 extern crate proc_macro;
-extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
 
 use postgres_types::ToSql;
 use proc_macro::TokenStream;
-use proc_macro2::{Ident, Span};
 use std::vec::Vec;
 use syn::parse;
 use syn::Data;
@@ -31,7 +29,7 @@ fn impl_web_macro(ast: &syn::DeriveInput) -> TokenStream {
         Data::Union(_data) => None,
     };
     let d = sdata.unwrap();
-    for (i, field) in d.fields.iter().enumerate() {
+    for field in d.fields.iter() {
         let val = match &field.ident {
             Some(data) => Some(data),
             None => None,

@@ -1,6 +1,9 @@
-use postgres_types::ToSql;
-use postgres::Row;
-use chrono::NaiveDateTime;
+extern crate chrono;
+
+use postgres_types::{ToSql};
+use tokio_postgres::Row;
+use chrono::naive::NaiveDateTime;
+use std::default::Default;
 
 pub trait ExtractStructs {
     fn extract(_data:&Self) -> Vec<&(dyn ToSql + Sync)>  {
@@ -53,10 +56,10 @@ pub struct GameJsonData {
     #[serde(rename = "appid")]
     pub appid: i64,
     #[serde(rename = "range")]
-    pub range: i64,
+    pub range: i32,
 }
 
-#[derive(ExtractStructs,Default,Debug)]
+#[derive(ExtractStructs,Debug)]
 pub struct PriceData {
     pub appid: i32,
     pub price: i32,
