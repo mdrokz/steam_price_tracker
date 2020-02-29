@@ -34,7 +34,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let env_pairs = (env_iter.next(), env_iter.next());
     println!("{:?}", no_steam);
     if no_steam != None {
-        set_interval(Duration::from_millis(1000 * 5), None);
+        executor::block_on(scrape_steam_store(None));
+        set_interval(Duration::from_millis(1000 * 5 * 60), None);
     } else {
         match env_pairs {
             (Some(steam_key), Some(user_id)) => {
@@ -51,7 +52,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ),
         }
         let data = get_games_data(&steam_api_url).await;
-        set_interval(Duration::from_millis(1000 * 5), Some(data));
+        let data2 = data.clone();
+        executor::block_on(scrape_steam_store(Some(data)));
+        set_interval(Duration::from_millis(1000 * 5 * 60), Some(data2));
     }
     Ok(())
 }
@@ -76,11 +79,12 @@ fn set_interval(duration: Duration, game: Option<GamesData>) {
     }
 }
 
-async fn connect(username: &str, password: &str, database: &str) -> Client {
+async fn connect(username: &str, password: &str, database: &str, port: &str) -> Client {
     let credentials = format!(
-        "host=localhost port=5432 user={} password={} dbname={}",
-        username, password, database
+        "host=localhost port={} user={} password={} dbname={}",
+        port, username, password, database
     );
+    println!("{}", credentials);
     let (client, connection) = tokio_postgres::connect(&credentials, NoTls).await.unwrap();
 
     tokio::spawn(async move {
@@ -131,6 +135,7 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
         "postgres",
         &env::var("PG_password").unwrap(),
         "steamPriceData",
+        &env::var("Pg_Port").unwrap(),
     )
     .await;
     let client = reqwest::Client::new();
@@ -148,14 +153,27 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
         "#game_area_purchase>.game_area_purchase_game_wrapper,.discount_final_price",
     )
     .unwrap();
+    let header = Selector::parse("h1").unwrap();
     let s = Selector::parse(".game_purchase_price").unwrap();
+    let mut game_name = String::from("");
+    for name in body.select(&header).nth(0) {
+        let x = name.text().collect::<Vec<_>>()[0];
+        game_name.push_str(&x.trim().replace("Buy",""));
+        println!("HEADER:{:?}", name.text().collect::<Vec<_>>());
+    }
 
     for data in body.select(&price).nth(0) {
         let class = data.value().classes().nth(0).unwrap();
 
         if class.contains("discount") {
-            let prc = data.text().collect::<Vec<_>>();
-
+            let mut prc = data.text().collect::<Vec<_>>();
+            let mut r = String::from("");
+            if prc[0].contains(",") {
+                r.push_str(prc[0]);
+                r = r.replace(",", "");
+                let s = r.as_str();
+                prc[0] = s;
+            }
             let mut price_data: PriceData = PriceData {
                 appid: 0,
                 price: 0,
@@ -195,10 +213,22 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
                     let result = c_price - price_data.price;
                     if let Some(range) = range {
                         if result > range {
-                            send_mail(&format!("A game is gone on sale its price is {}", c_price));
+                            send_mail(&format!(
+                                "Price Update\n
+                                 Game - {}\n
+                                 {} -> {}\n
+                                 Url -> {}",
+                                game_name, price_data.price, c_price, steam_store_url
+                            ));
                         }
                     } else {
-                        send_mail(&format!("A game is gone on sale its price is {}", c_price));
+                        send_mail(&format!(
+                            "Price Update\n
+                             Game - {}\n
+                             {} -> {}\n
+                             Url -> {}",
+                            game_name, price_data.price, c_price, steam_store_url
+                        ));
                     }
                 }
                 let p_data: PriceData = PriceData {
@@ -218,8 +248,18 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
                     .unwrap();
             }
         } else if class.contains("wrapper") {
-            let prc = data.select(&s).next().unwrap().text().collect::<Vec<_>>();
-            println!("ele:{:?}", prc);
+            let mut prc = match data.select(&s).next() {
+                Some(x) => x.text().collect::<Vec<_>>(),
+                None => return,
+            };
+            //let prc = data.select(&s).next().unwrap().text().collect::<Vec<_>>();
+            let mut r = String::from("");
+            if prc[0].contains(",") {
+                r.push_str(prc[0]);
+                r = r.replace(",", "");
+                let s = r.as_str();
+                prc[0] = s;
+            }
 
             let mut price_data: PriceData = PriceData {
                 appid: 0,
@@ -260,10 +300,22 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
                     let result = c_price - price_data.price;
                     if let Some(range) = range {
                         if result > range {
-                            send_mail(&format!("A game is gone on sale its price is {}", c_price));
+                            send_mail(&format!(
+                                "Price Update\n
+                                 Game - {}\n
+                                 {} -> {}\n
+                                 Url -> {}",
+                                game_name, price_data.price, c_price, steam_store_url
+                            ));
                         }
                     } else {
-                        send_mail(&format!("A game is gone on sale its price is {}", c_price));
+                        send_mail(&format!(
+                            "Price Update\n
+                             Game - {}\n
+                             {} -> {}\n
+                             Url -> {}",
+                            game_name, price_data.price, c_price, steam_store_url
+                        ));
                     }
                 }
                 let p_data: PriceData = PriceData {
