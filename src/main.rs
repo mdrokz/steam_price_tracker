@@ -183,7 +183,7 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
             price_data.map_pg_values(
                 &postgres_client
                     .query(
-                        "SELECT * FROM public.pricing WHERE appid=$1 ORDER BY date ASC limit 1",
+                        "SELECT * FROM public.pricing WHERE appid=$1 ORDER BY date DESC limit 1",
                         &[&appid.parse::<i32>().unwrap()],
                     )
                     .await
@@ -270,7 +270,7 @@ async fn spawn_thread(appid: String, range: Option<i32>) {
             price_data.map_pg_values(
                 &postgres_client
                     .query(
-                        "SELECT * FROM public.pricing WHERE appid=$1 ORDER BY date ASC limit 1",
+                        "SELECT * FROM public.pricing WHERE appid=$1 ORDER BY date DESC limit 1",
                         &[&appid.parse::<i32>().unwrap()],
                     )
                     .await
